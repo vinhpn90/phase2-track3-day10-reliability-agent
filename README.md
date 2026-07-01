@@ -27,28 +27,73 @@ Total lab time: **4–5 hours**.
 | 240–270 min | Redis shared cache: `SharedRedisCache.get()` / `set()` | Redis tests passing |
 | 270–300 min | Load test + final report | Final report + metrics JSON/CSV |
 
-## Quickstart
+## Installation & Setup
 
+Follow these steps to set up the project locally.
+
+### 1. Prerequisites
+Ensure you have the following installed:
+- Python 3.10+
+- Docker & Docker Compose (required for Redis shared cache testing)
+
+### 2. Environment Setup
+
+Choose one of the options below to install dependencies.
+
+#### Option A: Virtual Environment (Recommended)
+This prevents system package conflicts:
 ```bash
-# Option A: conda
-conda activate ai-lab
-pip install -e ".[dev]"
+# Create a virtual environment
+python3 -m venv .venv
 
-# Option B: venv
-python -m venv .venv
+# Activate virtual environment
+# On macOS/Linux:
 source .venv/bin/activate
+# On Windows (cmd):
+.venv\\Scripts\\activate.bat
+# On Windows (PowerShell):
+.venv\\Scripts\\Activate.ps1
+
+# Install package in editable mode with development dependencies
 pip install -e ".[dev]"
+```
 
-# Start Redis for shared cache (requires Docker)
+#### Option B: Global Install (with PEP 668 Override)
+If you are installing globally outside of a virtual environment on macOS or Debian-based Linux, you may encounter an `externally-managed-environment` error. To override it, use:
+```bash
+pip install -e ".[dev]" --break-system-packages
+```
+
+### 3. Start Redis Shared Cache
+
+The project uses Redis to store shared cache states. Start the Redis container:
+```bash
+# Start Redis via docker-compose
 make docker-up
+# (Equivalent to: docker compose up -d)
+```
 
-# Run tests — 25 will FAIL until you implement TODOs
+#### Troubleshooting Port 6379 Conflicts
+If the container fails to start because port `6379` is already allocated:
+1. Find what process is occupying port 6379:
+   - On macOS/Linux: `lsof -i :6379`
+   - On Windows: `netstat -ano | findstr 6379`
+2. Stop the conflicting service:
+   - If it is a native Redis service running on macOS: `brew services stop redis`
+   - If it is a conflicting Docker container: `docker stop <container_name>` (e.g. `docker stop ai_tutor_redis`)
+3. Re-run `make docker-up`.
+
+### 4. Running Verification Commands
+
+Once setup is complete, verify the installation:
+```bash
+# Run the entire test suite (with Redis running, all 35 tests should pass)
 make test
 
-# Run chaos simulation (requires gateway + circuit breaker + cache implemented)
+# Run chaos simulations
 make run-chaos
 
-# Generate report from metrics
+# Generate the HTML and markdown report
 make report
 ```
 
