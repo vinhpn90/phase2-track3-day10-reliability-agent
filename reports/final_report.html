@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Báo cáo Phân tích Độ tin cậy Gateway (Reliability Gateway Report)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #0b0f17;
+    --card-bg: #131924;
+    --card-border: #222d3d;
+    --text-primary: #f0f3f6;
+    --text-muted: #8b9bb0;
+    --accent-blue: #38bdf8;
+    --accent-blue-rgb: 56, 189, 248;
+    --accent-green: #34d399;
+    --accent-red: #f87171;
+    --accent-yellow: #fbbf24;
+    --accent-purple: #c084fc;
+    --accent-cyan: #22d3ee;
+    
+    --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(255, 255, 255, 0.05);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  code, pre, .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header Section */
+  header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 24px;
+  }
+  .title-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+  .meta-badges {
+    display: flex;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(var(--accent-blue-rgb), 0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(var(--accent-blue-rgb), 0.25);
+  }
+  .badge.success {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--accent-green);
+    border-color: rgba(52, 211, 153, 0.2);
+  }
+
+  /* Layout Grids */
+  .grid {
+    display: grid;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g1-2 { grid-template-columns: 1fr 2fr; }
+  
+  @media(max-width: 900px) {
+    .g3, .g2, .g1-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Cards styling */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+  }
+  .card:hover {
+    border-color: rgba(var(--accent-blue-rgb), 0.4);
+    transform: translateY(-2px);
+  }
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 20px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 12px;
+  }
+
+  /* Interactive Architecture SVG Map */
+  .arch-visualizer {
+    margin-top: 10px;
+    background: #0f141f;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+  }
+  .arch-svg {
+    width: 100%;
+    height: auto;
+    max-height: 240px;
+  }
+  .node-group {
+    cursor: pointer;
+  }
+  .node-group rect {
+    fill: #1c2536;
+    stroke: var(--card-border);
+    stroke-width: 1.5;
+    transition: var(--transition);
+  }
+  .node-group:hover rect {
+    fill: #27344d;
+    stroke: var(--accent-blue);
+  }
+  .node-group text {
+    fill: var(--text-primary);
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+  }
+  .node-group.active rect {
+    stroke: var(--accent-blue);
+    filter: drop-shadow(0 0 6px rgba(var(--accent-blue-rgb), 0.4));
+  }
+  .node-desc-card {
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--card-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  /* SLO Progress Bars */
+  .slo-item {
+    margin-bottom: 16px;
+  }
+  .slo-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .slo-name { font-weight: 500; }
+  .slo-val { font-weight: 700; }
+  .progress-bg {
+    height: 8px;
+    background: #182030;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-bar.success { background: linear-gradient(90deg, var(--accent-green), #10b981); }
+  .progress-bar.warning { background: linear-gradient(90deg, var(--accent-yellow), #f59e0b); }
+  .progress-bar.danger { background: linear-gradient(90deg, var(--accent-red), #ef4444); }
+
+  /* Big stats numbers */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .stat-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .stat-num.blue { color: var(--accent-blue); }
+  .stat-num.green { color: var(--accent-green); }
+  .stat-num.purple { color: var(--accent-purple); }
+  .stat-num.yellow { color: var(--accent-yellow); }
+
+  /* Interactive Tab Switcher */
+  .tab-header {
+    display: inline-flex;
+    background: #182030;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    padding: 8px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .tab-btn.active {
+    background: var(--card-bg);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .tab-content.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Comparison Delta Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+  }
+  th {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 13px;
+  }
+  td.num {
+    font-weight: 600;
+    text-align: right;
+  }
+  .delta-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .delta-badge.pos { background: rgba(52, 211, 153, 0.1); color: var(--accent-green); }
+  .delta-badge.neg { background: rgba(248, 81, 73, 0.1); color: var(--accent-red); }
+  .delta-badge.neutral { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+  /* Collapse / Accordion style */
+  .accordion-item {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .accordion-trigger {
+    width: 100%;
+    background: rgba(255,255,255,0.01);
+    border: 0;
+    color: var(--text-primary);
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+  }
+  .accordion-trigger:hover {
+    background: rgba(255,255,255,0.03);
+  }
+  .accordion-trigger::after {
+    content: '▼';
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: var(--transition);
+  }
+  .accordion-item.active .accordion-trigger::after {
+    transform: rotate(180deg);
+  }
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0,0,0,0.1);
+  }
+  .accordion-content-inner {
+    padding: 20px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  /* List Styling */
+  ul {
+    padding-left: 20px;
+    margin: 0;
+  }
+  li {
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  li strong {
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  
+  <!-- Header -->
+  <header>
+    <div class="title-area">
+      <div>
+        <h1>🛡️ Báo cáo Phân tích Độ tin cậy Gateway</h1>
+        <p class="subtitle">Báo cáo kiểm định tự động từ các kịch bản Chaos & Caching thực tế trên Docker</p>
+      </div>
+      <div class="meta-badges">
+        <span class="badge success">Redis Shared Cache</span>
+        <span class="badge">Day 10 Lab</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive architecture map -->
+  <div class="grid g1-2">
+    <div class="card">
+      <h2>Sơ đồ Kiến trúc luồng</h2>
+      <div class="arch-visualizer">
+        <svg class="arch-svg" viewBox="0 0 320 200">
+          <!-- Connectors -->
+          <line x1="50" y1="100" x2="110" y2="100" stroke="#30363d" stroke-width="2" />
+          <line x1="160" y1="100" x2="220" y2="100" stroke="#30363d" stroke-width="2" />
+          
+          <path d="M 50 100 L 50 40 L 110 40" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
+          <path d="M 160 40 L 220 40 C 240 40, 240 100, 260 100" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
+          
+          <path d="M 160 100 L 160 160 L 220 160" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
+          
+          <!-- Nodes -->
+          <g class="node-group active" data-node="gateway" transform="translate(10, 80)">
+            <rect x="0" y="0" width="80" height="40" rx="6" />
+            <text x="40" y="24" text-anchor="middle">Gateway</text>
+          </g>
+          
+          <g class="node-group" data-node="cache" transform="translate(110, 20)">
+            <rect x="0" y="0" width="80" height="40" rx="6" />
+            <text x="40" y="24" text-anchor="middle">Redis Cache</text>
+          </g>
+          
+          <g class="node-group" data-node="breaker1" transform="translate(110, 80)">
+            <rect x="0" y="0" width="80" height="40" rx="6" />
+            <text x="40" y="24" text-anchor="middle">CB: Primary</text>
+          </g>
+          
+          <g class="node-group" data-node="breaker2" transform="translate(110, 140)">
+            <rect x="0" y="0" width="80" height="40" rx="6" />
+            <text x="40" y="24" text-anchor="middle">CB: Backup</text>
+          </g>
+          
+          <g class="node-group" data-node="fallback" transform="translate(230, 80)">
+            <rect x="0" y="0" width="80" height="40" rx="6" />
+            <text x="40" y="24" text-anchor="middle">Fallback Tĩnh</text>
+          </g>
+        </svg>
+      </div>
+      <div class="node-desc-card" id="node-desc">
+        Bấm vào bất cứ thành phần nào trong sơ đồ để xem vai trò và cách xử lý chi tiết.
+      </div>
+    </div>
+
+    <!-- Live SLO Checklist -->
+    <div class="card">
+      <h2>Mức cam kết dịch vụ (SLO Targets)</h2>
+      <div id="slo-container">
+        <!-- Will be filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive comparison dashboard -->
+  <div class="card" style="margin-bottom: 24px;">
+    <h2>Bảng điều khiển So sánh & Đo lường</h2>
+    
+    <div class="tab-header">
+      <button class="tab-btn active" onclick="switchTab('cache-enabled')">Có sử dụng Cache</button>
+      <button class="tab-btn" onclick="switchTab('cache-disabled')">Tắt Cache (Baseline)</button>
+      <button class="tab-btn" onclick="switchTab('comparison')">Bảng so sánh chi tiết & Delta</button>
+    </div>
+
+    <!-- Cache Enabled Content -->
+    <div class="tab-content active" id="tab-cache-enabled">
+      <div class="grid g2" style="margin-bottom: 20px;">
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-label">Availability (Khả dụng)</div>
+            <div class="stat-num green" id="ce-avail">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cache Hit Rate (Trúng cache)</div>
+            <div class="stat-num blue" id="ce-hit">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Tổng chi phí thử nghiệm</div>
+            <div class="stat-num purple" id="ce-cost">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Circuit Tripped (Ngắt mạch)</div>
+            <div class="stat-num yellow" id="ce-trips">-</div>
+          </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
+          <h3 style="margin-top: 0; font-size: 14px; font-weight: 600;">Phân tích hệ thống (Có sử dụng Cache)</h3>
+          <p style="margin: 0 0 12px; font-size: 13px; color: var(--text-muted);">Với cấu hình Redis Cache được chia sẻ cho nhiều instance:</p>
+          <ul style="font-size: 13px;">
+            <li>Đạt tỉ lệ trúng cache lên tới **73%** giúp hạn chế tối đa các cuộc gọi trùng lặp lên LLM.</li>
+            <li>Tiết kiệm đáng kể tài chính (**$0.219** được lưu giữ).</li>
+            <li>Số lần ngắt mạch giảm mạnh chỉ còn **8 lần**, giúp hệ thống giữ vững độ tin cậy.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Disabled Content -->
+    <div class="tab-content" id="tab-cache-disabled">
+      <div class="grid g2" style="margin-bottom: 20px;">
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-label">Availability (Khả dụng)</div>
+            <div class="stat-num yellow" id="cd-avail">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cache Hit Rate (Trúng cache)</div>
+            <div class="stat-num blue">0.0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Tổng chi phí thử nghiệm</div>
+            <div class="stat-num purple" id="cd-cost">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Circuit Tripped (Ngắt mạch)</div>
+            <div class="stat-num danger" id="cd-trips">-</div>
+          </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
+          <h3 style="margin-top: 0; font-size: 14px; font-weight: 600;">Phân tích hệ thống (Không sử dụng Cache)</h3>
+          <p style="margin: 0 0 12px; font-size: 13px; color: var(--text-muted);">Khi vô hiệu hóa bộ nhớ đệm cache:</p>
+          <ul style="font-size: 13px;">
+            <li>Chi phí tăng gấp **3.7 lần** do mọi request đều phải gọi qua API của LLM.</li>
+            <li>Các sự cố ngắt mạch xảy ra liên tục (**22 lần**) do Primary Model quá tải/lỗi flake.</li>
+            <li>Tỉ lệ khả dụng tụt xuống **96.33%**, không đạt mục tiêu SLO do nhiều cuộc gọi rơi vào vùng lỗi.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Comparison Content -->
+    <div class="tab-content" id="tab-comparison">
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Chỉ số thử nghiệm</th>
+              <th style="text-align: right;">Không sử dụng Cache</th>
+              <th style="text-align: right;">Có sử dụng Cache</th>
+              <th style="text-align: right;">Sự khác biệt (Delta)</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-rows">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Collapsible Details sections -->
+  <div class="grid g1">
+    
+    <!-- Scenarios -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        🔥 Chi tiết kịch bản thử nghiệm Chaos (Scenarios Status)
+      </button>
+      <div class="accordion-content">
+        <div class="accordion-content-inner">
+          <ul style="margin: 0;">
+            <li><strong>primary_timeout_100 (ĐẠT):</strong> Primary model bị cấu hình lỗi 100%. Gateway đã tự động chuyển hướng thành công sang Backup model thông qua Circuit Breaker.</li>
+            <li><strong>primary_flaky_50 (ĐẠT):</strong> Primary model bị flaky 50%. Mạch bảo vệ dao động giữa các trạng thái CLOSED/OPEN, giúp phân bổ tải thông minh.</li>
+            <li><strong>all_healthy (ĐẠT):</strong> Cả 2 model đều khỏe mạnh. 100% request được xử lý mượt mà qua Primary model.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Failure Analysis -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        ⚠️ Phân tích điểm yếu & Rủi ro hệ thống (Failure Analysis)
+      </button>
+      <div class="accordion-content">
+        <div class="accordion-content-inner">
+          <p style="margin-top: 0;">Mặc dù hệ thống chạy ổn định, vẫn tồn tại điểm yếu tiềm tàng:</p>
+          <ul style="margin: 0;">
+            <li><strong>Rủi ro kết nối Redis:</strong> Nếu Redis Cluster gặp sự cố ngoại mạng hoặc bị quá tải, bộ nhớ đệm `SharedRedisCache` sẽ bị crash. Hệ thống hiện tại chưa xử lý loại trừ ngoại lệ kết nối Redis này một cách mềm dẻo.</li>
+            <li><strong>Giải pháp khắc phục đề xuất:</strong> Triển khai cơ chế *Graceful Cache Degradation* (Tự động hạ cấp) — Khi Redis mất kết nối, gateway sẽ tự động hạ cấp xuống sử dụng `ResponseCache` in-memory tạm thời hoặc bỏ qua cache trực tiếp để tránh gây sập Gateway.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        🚀 Kế hoạch cải tiến Production (Next Steps)
+      </button>
+      <div class="accordion-content">
+        <div class="accordion-content-inner">
+          <ol style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;"><strong>Đồng bộ trạng thái Circuit Breaker toàn cục:</strong> Lưu trữ trạng thái counter lỗi của các Circuit Breaker trên Redis thay vì in-memory để tất cả các instance gateway phân tán có cùng góc nhìn về sức khỏe của các Provider.</li>
+            <li style="margin-bottom: 8px;"><strong>Kiểm soát ngân sách token (Budget-aware Routing):</strong> Tự động chặn hoặc chuyển hướng các truy vấn đắt đỏ sang model rẻ hơn một khi ngân sách dự kiến của tài khoản đạt ngưỡng giới hạn.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // Số liệu thật được ghi nhận trong reports/metrics.json và metrics_nocache.json
+  const DATA = {
+    enabled: {
+      avail: 0.9967,
+      hits: 0.7300,
+      cost: 0.033222,
+      trips: 8,
+      err: 0.0033,
+      p50: 278.61,
+      p95: 317.21,
+      p99: 321.12,
+      fallback: 0.9839,
+      recovery: 2491.29
+    },
+    disabled: {
+      avail: 0.9633,
+      hits: 0.0000,
+      cost: 0.124034,
+      trips: 22,
+      err: 0.0367,
+      p50: 281.08,
+      p95: 318.69,
+      p99: 323.06,
+      fallback: 0.9469,
+      recovery: 2316.46
+    }
+  };
+
+  // SLO definition
+  const SLO = [
+    { name: 'Tính khả dụng (Availability)', target: '>= 99%', actual: DATA.enabled.avail, unit: '%', type: 'avail' },
+    { name: 'Độ trễ P95 (Latency P95)', target: '< 2500 ms', actual: DATA.enabled.p95, unit: ' ms', type: 'lat' },
+    { name: 'Tỉ lệ xử lý lỗi thành công (Fallback Success Rate)', target: '>= 95%', actual: DATA.enabled.fallback, unit: '%', type: 'fallback' },
+    { name: 'Tỉ lệ trúng cache (Cache Hit Rate)', target: '>= 10%', actual: DATA.enabled.hits, unit: '%', type: 'hit' },
+    { name: 'Thời gian phục hồi mạch (Recovery Time)', target: '< 5000 ms', actual: DATA.enabled.recovery, unit: ' ms', type: 'recovery' }
+  ];
+
+  // Node descriptions for the interactive architecture map
+  const NODE_DESCS = {
+    gateway: "<strong>Gateway Layer:</strong> Nhận request từ người dùng, kiểm tra cache và phân bổ tải thông qua các Circuit Breakers.",
+    cache: "<strong>Redis Cache:</strong> Bộ nhớ đệm phân tán. So khớp ngữ nghĩa Cosine Similarity, loại trừ PII và chống false-hit khác năm.",
+    breaker1: "<strong>Circuit Breaker (Primary):</strong> Ngắt kết nối tới Provider chính nếu phát hiện lỗi liên tục để tránh retry storm.",
+    breaker2: "<strong>Circuit Breaker (Backup):</strong> Định tuyến dự phòng tới Provider phụ có chi phí thấp hơn nếu Provider chính bị ngắt mạch.",
+    fallback: "<strong>Static Fallback:</strong> Câu trả lời dự phòng tĩnh khi mọi dịch vụ LLM thượng nguồn đều mất kết nối hoặc bị ngắt mạch."
+  };
+
+  // Switch tabs
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    if (tabName === 'cache-enabled') {
+      document.getElementById('tab-cache-enabled').classList.add('active');
+      event.target.classList.add('active');
+    } else if (tabName === 'cache-disabled') {
+      document.getElementById('tab-cache-disabled').classList.add('active');
+      event.target.classList.add('active');
+    } else {
+      document.getElementById('tab-comparison').classList.add('active');
+      event.target.classList.add('active');
+    }
+  }
+
+  // Toggle accordions
+  function toggleAccordion(btn) {
+    const item = btn.parentElement;
+    const content = btn.nextElementSibling;
+    item.classList.toggle('active');
+    if (item.classList.contains('active')) {
+      content.style.maxHeight = content.scrollHeight + 'px';
+    } else {
+      content.style.maxHeight = '0';
+    }
+  }
+
+  // Render nodes hover
+  document.querySelectorAll('.node-group').forEach(group => {
+    group.addEventListener('click', () => {
+      document.querySelectorAll('.node-group').forEach(g => g.classList.remove('active'));
+      group.classList.add('active');
+      const nodeId = group.dataset.node;
+      document.getElementById('node-desc').innerHTML = NODE_DESCS[nodeId];
+    });
+  });
+
+  // Load and Render SLO
+  function renderSLO() {
+    const container = document.getElementById('slo-container');
+    container.innerHTML = '';
+    
+    SLO.forEach(s => {
+      let isMet = false;
+      let pctVal = 0;
+      let displayActual = '';
+      
+      if (s.type === 'avail' || s.type === 'fallback' || s.type === 'hit') {
+        isMet = s.type === 'hit' ? s.actual >= 0.1 : (s.type === 'avail' ? s.actual >= 0.99 : s.actual >= 0.95);
+        pctVal = s.actual * 100;
+        displayActual = (s.actual * 100).toFixed(2) + s.unit;
+      } else if (s.type === 'lat') {
+        isMet = s.actual < 2500;
+        pctVal = Math.min(100, (1 - (s.actual / 2500)) * 100);
+        displayActual = s.actual.toFixed(1) + s.unit;
+      } else { // recovery
+        isMet = s.actual < 5000;
+        pctVal = Math.min(100, (1 - (s.actual / 5000)) * 100);
+        displayActual = s.actual.toFixed(1) + s.unit;
+      }
+      
+      const pColor = isMet ? 'success' : 'danger';
+      
+      const el = document.createElement('div');
+      el.className = 'slo-item';
+      el.innerHTML = `
+        <div class="slo-header">
+          <span class="slo-name">${s.name} <span class="badge ${pColor}">${isMet ? 'ĐẠT' : 'CHƯA ĐẠT'}</span></span>
+          <span class="slo-val">SLO: ${s.target} | Thực tế: ${displayActual}</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-bar ${pColor}" style="width: ${pctVal}%"></div>
+        </div>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  // Render Stats and Comparison
+  function renderStats() {
+    // Enabled
+    document.getElementById('ce-avail').textContent = (DATA.enabled.avail * 100).toFixed(2) + '%';
+    document.getElementById('ce-hit').textContent = (DATA.enabled.hits * 100).toFixed(1) + '%';
+    document.getElementById('ce-cost').textContent = '$' + DATA.enabled.cost.toFixed(5);
+    document.getElementById('ce-trips').textContent = DATA.enabled.trips + ' lần';
+
+    // Disabled
+    document.getElementById('cd-avail').textContent = (DATA.disabled.avail * 100).toFixed(2) + '%';
+    document.getElementById('cd-cost').textContent = '$' + DATA.disabled.cost.toFixed(5);
+    document.getElementById('cd-trips').textContent = DATA.disabled.trips + ' lần';
+
+    // Comparison rows
+    const rows = [
+      { label: 'Tỉ lệ khả dụng (Availability)', unit: '%', isPct: true, valD: DATA.disabled.avail, valE: DATA.enabled.avail, lowerBetter: false },
+      { label: 'Tỉ lệ trúng Cache (Cache Hit Rate)', unit: '%', isPct: true, valD: DATA.disabled.hits, valE: DATA.enabled.hits, lowerBetter: false },
+      { label: 'Tổng chi phí ước tính', unit: '', isPct: false, prefix: '$', valD: DATA.disabled.cost, valE: DATA.enabled.cost, decimals: 5, lowerBetter: true },
+      { label: 'Số lần Circuit Breaker ngắt mạch', unit: ' lần', isPct: false, valD: DATA.disabled.trips, valE: DATA.enabled.trips, decimals: 0, lowerBetter: true },
+      { label: 'Độ trễ trung bình P50', unit: ' ms', isPct: false, valD: DATA.disabled.p50, valE: DATA.enabled.p50, decimals: 1, lowerBetter: true },
+      { label: 'Độ trễ P95', unit: ' ms', isPct: false, valD: DATA.disabled.p95, valE: DATA.enabled.p95, decimals: 1, lowerBetter: true },
+      { label: 'Thời gian phục hồi mạch trung bình', unit: ' ms', isPct: false, valD: DATA.disabled.recovery, valE: DATA.enabled.recovery, decimals: 1, lowerBetter: true }
+    ];
+
+    const tbody = document.getElementById('comparison-rows');
+    tbody.innerHTML = '';
+    
+    rows.forEach(r => {
+      let dStr = '', eStr = '', deltaStr = '', deltaClass = 'neutral';
+      
+      if (r.isPct) {
+        dStr = (r.valD * 100).toFixed(2) + r.unit;
+        eStr = (r.valE * 100).toFixed(2) + r.unit;
+        const diff = (r.valE - r.valD) * 100;
+        deltaStr = (diff >= 0 ? '+' : '') + diff.toFixed(2) + r.unit;
+        deltaClass = diff === 0 ? 'neutral' : (diff > 0 ? (r.lowerBetter ? 'neg' : 'pos') : (r.lowerBetter ? 'pos' : 'neg'));
+      } else {
+        const pref = r.prefix || '';
+        dStr = pref + r.valD.toFixed(r.decimals) + r.unit;
+        eStr = pref + r.valE.toFixed(r.decimals) + r.unit;
+        const diff = r.valE - r.valD;
+        const pctDiff = r.valD > 0 ? (diff / r.valD * 100) : 0;
+        
+        deltaStr = (diff >= 0 ? '+' : '') + diff.toFixed(r.decimals) + r.unit;
+        if (pctDiff !== 0) {
+          deltaStr += ` (${pctDiff >= 0 ? '+' : ''}${pctDiff.toFixed(1)}%)`;
+        }
+        
+        deltaClass = diff === 0 ? 'neutral' : (diff > 0 ? (r.lowerBetter ? 'neg' : 'pos') : (r.lowerBetter ? 'pos' : 'neg'));
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight: 500;">${r.label}</td>
+        <td class="num">${dStr}</td>
+        <td class="num">${eStr}</td>
+        <td class="num"><span class="delta-badge ${deltaClass}">${deltaStr}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Init
+  window.onload = () => {
+    renderSLO();
+    renderStats();
+  };
+</script>
+</body>
+</html>
