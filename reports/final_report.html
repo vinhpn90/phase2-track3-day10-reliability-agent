@@ -3,782 +3,765 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Báo cáo Phân tích Độ tin cậy Gateway (Reliability Gateway Report)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Báo cáo Phân tích Độ tin cậy Gateway — Báo cáo Tương tác</title>
 <style>
-  :root {
-    --bg-color: #0b0f17;
-    --card-bg: #131924;
-    --card-border: #222d3d;
-    --text-primary: #f0f3f6;
-    --text-muted: #8b9bb0;
-    --accent-blue: #38bdf8;
-    --accent-blue-rgb: 56, 189, 248;
-    --accent-green: #34d399;
-    --accent-red: #f87171;
-    --accent-yellow: #fbbf24;
-    --accent-purple: #c084fc;
-    --accent-cyan: #22d3ee;
-    
-    --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(255, 255, 255, 0.05);
-    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#30363d;
+    --txt:#e6edf3; --muted:#8b949e; --accent:#58a6ff;
+    --green:#3fb950; --red:#f85149; --amber:#d29922; --violet:#bc8cff; --cyan:#39c5cf;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.4);
   }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg-color);
-    color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  
-  code, pre, .mono {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-  }
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-  }
-
-  /* Header Section */
-  header {
-    margin-bottom: 40px;
-    border-bottom: 1px solid var(--card-border);
-    padding-bottom: 24px;
-  }
-  .title-area {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  h1 {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 8px;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #fff 30%, var(--accent-blue) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .subtitle {
-    color: var(--text-muted);
-    font-size: 15px;
-    margin: 0;
-  }
-  .meta-badges {
-    display: flex;
-    gap: 8px;
-  }
-  .badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: rgba(var(--accent-blue-rgb), 0.1);
-    color: var(--accent-blue);
-    border: 1px solid rgba(var(--accent-blue-rgb), 0.25);
-  }
-  .badge.success {
-    background: rgba(52, 211, 153, 0.1);
-    color: var(--accent-green);
-    border-color: rgba(52, 211, 153, 0.2);
-  }
-
-  /* Layout Grids */
-  .grid {
-    display: grid;
-    gap: 24px;
-    margin-bottom: 24px;
-  }
-  .g3 { grid-template-columns: repeat(3, 1fr); }
-  .g2 { grid-template-columns: repeat(2, 1fr); }
-  .g1-2 { grid-template-columns: 1fr 2fr; }
-  
-  @media(max-width: 900px) {
-    .g3, .g2, .g1-2 { grid-template-columns: 1fr; }
-  }
-
-  /* Cards styling */
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-  }
-  .card:hover {
-    border-color: rgba(var(--accent-blue-rgb), 0.4);
-    transform: translateY(-2px);
-  }
-  h2 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0 0 20px;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 12px;
-  }
-
-  /* Interactive Architecture SVG Map */
-  .arch-visualizer {
-    margin-top: 10px;
-    background: #0f141f;
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid var(--card-border);
-  }
-  .arch-svg {
-    width: 100%;
-    height: auto;
-    max-height: 240px;
-  }
-  .node-group {
-    cursor: pointer;
-  }
-  .node-group rect {
-    fill: #1c2536;
-    stroke: var(--card-border);
-    stroke-width: 1.5;
-    transition: var(--transition);
-  }
-  .node-group:hover rect {
-    fill: #27344d;
-    stroke: var(--accent-blue);
-  }
-  .node-group text {
-    fill: var(--text-primary);
-    font-size: 11px;
-    font-weight: 500;
-    pointer-events: none;
-  }
-  .node-group.active rect {
-    stroke: var(--accent-blue);
-    filter: drop-shadow(0 0 6px rgba(var(--accent-blue-rgb), 0.4));
-  }
-  .node-desc-card {
-    margin-top: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed var(--card-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-  }
-
-  /* SLO Progress Bars */
-  .slo-item {
-    margin-bottom: 16px;
-  }
-  .slo-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-  .slo-name { font-weight: 500; }
-  .slo-val { font-weight: 700; }
-  .progress-bg {
-    height: 8px;
-    background: #182030;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .progress-bar.success { background: linear-gradient(90deg, var(--accent-green), #10b981); }
-  .progress-bar.warning { background: linear-gradient(90deg, var(--accent-yellow), #f59e0b); }
-  .progress-bar.danger { background: linear-gradient(90deg, var(--accent-red), #ef4444); }
-
-  /* Big stats numbers */
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  .stat-box {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-  }
-  .stat-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-  }
-  .stat-num {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-  }
-  .stat-num.blue { color: var(--accent-blue); }
-  .stat-num.green { color: var(--accent-green); }
-  .stat-num.purple { color: var(--accent-purple); }
-  .stat-num.yellow { color: var(--accent-yellow); }
-
-  /* Interactive Tab Switcher */
-  .tab-header {
-    display: inline-flex;
-    background: #182030;
-    padding: 4px;
-    border-radius: 10px;
-    border: 1px solid var(--card-border);
-    margin-bottom: 24px;
-  }
-  .tab-btn {
-    background: transparent;
-    border: 0;
-    color: var(--text-muted);
-    padding: 8px 16px;
-    font-size: 13.5px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: var(--transition);
-  }
-  .tab-btn.active {
-    background: var(--card-bg);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  .tab-content {
-    display: none;
-    animation: fadeIn 0.4s ease;
-  }
-  .tab-content.active {
-    display: block;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Comparison Delta Table */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--card-border);
-  }
-  th {
-    color: var(--text-muted);
-    font-weight: 500;
-    font-size: 13px;
-  }
-  td.num {
-    font-weight: 600;
-    text-align: right;
-  }
-  .delta-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .delta-badge.pos { background: rgba(52, 211, 153, 0.1); color: var(--accent-green); }
-  .delta-badge.neg { background: rgba(248, 81, 73, 0.1); color: var(--accent-red); }
-  .delta-badge.neutral { background: rgba(255,255,255,0.05); color: var(--text-muted); }
-
-  /* Collapse / Accordion style */
-  .accordion-item {
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    margin-bottom: 12px;
-    overflow: hidden;
-  }
-  .accordion-trigger {
-    width: 100%;
-    background: rgba(255,255,255,0.01);
-    border: 0;
-    color: var(--text-primary);
-    padding: 16px 20px;
-    text-align: left;
-    font-size: 14.5px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: var(--transition);
-  }
-  .accordion-trigger:hover {
-    background: rgba(255,255,255,0.03);
-  }
-  .accordion-trigger::after {
-    content: '▼';
-    font-size: 10px;
-    color: var(--text-muted);
-    transition: var(--transition);
-  }
-  .accordion-item.active .accordion-trigger::after {
-    transform: rotate(180deg);
-  }
-  .accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    background: rgba(0,0,0,0.1);
-  }
-  .accordion-content-inner {
-    padding: 20px;
-    border-top: 1px solid var(--card-border);
-  }
-
-  /* List Styling */
-  ul {
-    padding-left: 20px;
-    margin: 0;
-  }
-  li {
-    margin-bottom: 8px;
-    color: var(--text-primary);
-  }
-  li strong {
-    color: #fff;
-  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+  code,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 64px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:15px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  select,button,input[type=range]{font:inherit}
+  select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:260px}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--accent);color:#fff}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#07131f;font-weight:600}
+  button.primary:hover{filter:brightness(1.08)}
+  button.danger:hover{border-color:var(--red);color:var(--red)}
+  button.warn:hover{border-color:var(--amber);color:var(--amber)}
+  button.ok:hover{border-color:var(--green);color:var(--green)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;border-radius:0;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.active{background:var(--accent);color:#07131f;font-weight:600}
+  .hint{color:var(--muted);font-size:12.5px}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  /* flow diagram */
+  .flow{display:flex;align-items:stretch;gap:0;margin-top:6px;overflow-x:auto;padding-bottom:6px}
+  .node{position:relative;flex:1;min-width:150px;background:var(--panel2);border:1.5px solid var(--line);border-radius:12px;padding:14px;transition:.25s}
+  .node .nt{font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .node .nd{font-size:12px;color:var(--muted);min-height:32px}
+  .node .verdict{margin-top:8px;font-size:12px;font-weight:600;min-height:18px}
+  .node.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.18);transform:translateY(-2px)}
+  .node.pass{border-color:var(--green)} .node.pass .verdict{color:var(--green)}
+  .node.fail{border-color:var(--red)} .node.fail .verdict{color:var(--red)}
+  .node.skip{border-color:var(--amber)} .node.skip .verdict{color:var(--amber)}
+  .node.hit{border-color:var(--cyan)} .node.hit .verdict{color:var(--cyan)}
+  .arrow{flex:0 0 30px;display:flex;align-items:center;justify-content:center;color:var(--line);font-size:22px}
+  .arrow.lit{color:var(--accent)}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .s-closed{background:var(--green)} .s-open{background:var(--red)} .s-half_open{background:var(--amber)}
+  /* state badges */
+  .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.03em}
+  .b-closed{background:rgba(63,185,80,.15);color:var(--green)}
+  .b-open{background:rgba(248,81,73,.15);color:var(--red)}
+  .b-half_open{background:rgba(210,153,34,.18);color:var(--amber)}
+  /* tables & meters */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  .metric{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+  .metric:last-child{border-bottom:0}
+  .metric .v{font-weight:700}
+  .meter{height:7px;background:var(--panel2);border-radius:20px;overflow:hidden;margin-top:4px}
+  .meter>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan))}
+  .breaker{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--panel2)}
+  .breaker .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .cd{font-size:11.5px;color:var(--amber)}
+  /* log */
+  .log{max-height:280px;overflow:auto;font-size:12px}
+  .log .req{border-left:2px solid var(--line);padding:6px 0 8px 12px;margin-bottom:6px}
+  .log .rq{color:var(--accent);font-weight:600}
+  .log .st{color:var(--muted)}
+  .route{font-weight:700}
+  .route.primary{color:var(--green)} .route.fallback{color:var(--amber)}
+  .route.static_fallback{color:var(--red)} .route.cache{color:var(--cyan)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12.5px}
+  .kv .k{color:var(--muted)}
+  a{color:var(--accent)}
+  .foot{color:var(--muted);font-size:12px;margin-top:8px}
+  ul.flowdesc{padding-left:18px;margin:6px 0}
+  ul.flowdesc li{margin:5px 0}
+  /* overall report */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .kn{font-size:24px;font-weight:800;line-height:1.1}
+  .kpi .kl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+  .bar{display:flex;align-items:center;gap:8px;margin:7px 0}
+  .bar .lbl{width:150px;font-size:12.5px}
+  .bar .track{flex:1;height:14px;background:var(--panel2);border-radius:20px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:20px;transition:width .3s}
+  .bar .num{width:96px;text-align:right;font-size:12.5px;font-weight:600}
+  .report-h{font-size:14px;margin:8px 0 6px;color:var(--txt);font-weight:600}
+  /* detailed 300 */
+  .heat{display:flex;flex-wrap:wrap;gap:2px;margin:4px 0 12px}
+  .cell{width:9px;height:9px;border-radius:2px;cursor:default}
+  .c-cache_hit{background:var(--cyan)} .c-primary{background:var(--green)}
+  .c-fallback{background:var(--amber)} .c-static_fallback{background:var(--red)}
+  .histo{display:flex;align-items:flex-end;gap:3px;height:130px;margin:20px 0 4px}
+  .histo .col{flex:1;background:linear-gradient(180deg,var(--accent),var(--cyan));border-radius:3px 3px 0 0;min-height:2px;position:relative}
+  .histo .col b{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);font-weight:600}
+  .histo-x{display:flex;gap:3px;font-size:9.5px;color:var(--muted)}
+  .histo-x span{flex:1;text-align:center}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:8px 0}
+  .legend .li{display:flex;align-items:center;gap:5px}
+  .legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .reqlog{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px}
+  .reqlog table{font-size:12px} .reqlog th{position:sticky;top:0;background:var(--panel);z-index:1}
+  .reqlog td,.reqlog th{white-space:nowrap;padding:5px 8px}
+  .reqlog td.q{white-space:normal;max-width:340px;color:var(--muted)}
+  .rpill{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px}
+  .rp-cache_hit{background:rgba(57,197,207,.16);color:var(--cyan)}
+  .rp-primary{background:rgba(63,185,80,.16);color:var(--green)}
+  .rp-fallback{background:rgba(210,153,34,.18);color:var(--amber)}
+  .rp-static_fallback{background:rgba(248,81,73,.16);color:var(--red)}
+  .chip{font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:20px;background:var(--panel2);color:var(--muted);cursor:pointer}
+  .chip.active{border-color:var(--accent);color:#fff;background:rgba(88,166,255,.12)}
 </style>
 </head>
 <body>
-<div class="container">
-  
-  <!-- Header -->
-  <header>
-    <div class="title-area">
-      <div>
-        <h1>🛡️ Báo cáo Phân tích Độ tin cậy Gateway</h1>
-        <p class="subtitle">Báo cáo kiểm định tự động từ các kịch bản Chaos & Caching thực tế trên Docker</p>
-      </div>
-      <div class="meta-badges">
-        <span class="badge success">Redis Shared Cache</span>
-        <span class="badge">Day 10 Lab</span>
-      </div>
-    </div>
-  </header>
+<div class="wrap">
+  <h1>🛡️ Báo cáo Phân tích Độ tin cậy Gateway — Demo Tương tác</h1>
+  <p class="sub">Mô phỏng trực tiếp luồng <b>Cache → Circuit Breaker (primary) → Circuit Breaker (backup) → Static fallback</b>.
+  Logic JS bám đúng code Python trong <code>src/reliability_lab/</code> và đúng ngưỡng trong <code>configs/default.yaml</code>.
+  Không cần Python — mở file này bằng trình duyệt là chạy.</p>
 
-  <!-- Interactive architecture map -->
-  <div class="grid g1-2">
+  <!-- CONTROLS -->
+  <div class="card" style="margin-bottom:16px">
+    <h2>Điều khiển</h2>
+    <div class="controls">
+      <select id="q"></select>
+      <button class="primary" id="send">▶ Gửi request</button>
+      <button id="repeat">↻ Gửi lại (test cache)</button>
+      <button id="burst">⚡ Bắn 20 request</button>
+      <button class="danger" id="reset">⟲ Reset</button>
+    </div>
+    <div class="controls" style="margin-top:12px">
+      <span class="hint">Sức khỏe provider <b>primary</b>:</span>
+      <div class="seg" id="health">
+        <button data-r="0.25" class="active">Mặc định 25%</button>
+        <button data-r="0.5" class="warn">Flaky 50%</button>
+        <button data-r="1.0" class="danger">Chết 100%</button>
+      </div>
+      <span class="hint" style="margin-left:12px">Ngưỡng similarity: <b id="thv">0.92</b></span>
+      <input type="range" id="th" min="0.5" max="1" step="0.01" value="0.92" />
+      <label class="hint"><input type="checkbox" id="anim" checked /> hoạt hình</label>
+    </div>
+    <p class="hint" style="margin:10px 0 0">💡 Kịch bản gợi ý: (1) chọn “Chết 100%” rồi bấm Gửi vài lần → xem circuit <b>primary</b> mở, traffic dồn sang <b>backup</b>.
+    (2) Bấm “Gửi lại” để thấy <span style="color:var(--cyan)">cache hit</span>. (3) Chọn câu chứa <i>user 123 / password</i> → bị chặn vì PII.
+    (4) Chọn câu <i>refund … 2024</i> rồi câu <i>… 2026</i> → cache từ chối vì <b>false-hit</b> khác năm.</p>
+  </div>
+
+  <!-- FLOW DIAGRAM -->
+  <div class="card" style="margin-bottom:16px">
+    <h2>Luồng xử lý 1 request</h2>
+    <div class="flow" id="flow">
+      <div class="node" id="n-user"><div class="nt">👤 User</div><div class="nd">Prompt gửi vào gateway</div><div class="verdict" id="v-user"></div></div>
+      <div class="arrow" id="a-1">→</div>
+      <div class="node" id="n-cache"><div class="nt">🗃️ Cache</div><div class="nd">n-gram cosine + PII + false-hit</div><div class="verdict" id="v-cache"></div></div>
+      <div class="arrow" id="a-2">→</div>
+      <div class="node" id="n-primary"><div class="nt"><span class="dot s-closed" id="d-primary"></span> CB · primary</div><div class="nd">Provider A · 180ms · $0.010/1k</div><div class="verdict" id="v-primary"></div></div>
+      <div class="arrow" id="a-3">→</div>
+      <div class="node" id="n-backup"><div class="nt"><span class="dot s-closed" id="d-backup"></span> CB · backup</div><div class="nd">Provider B · 260ms · $0.006/1k</div><div class="verdict" id="v-backup"></div></div>
+      <div class="arrow" id="a-4">→</div>
+      <div class="node" id="n-static"><div class="nt">🧯 Static</div><div class="nd">Câu trả lời degraded</div><div class="verdict" id="v-static"></div></div>
+    </div>
+    <div style="margin-top:14px" class="kv">
+      <span class="k">Kết quả</span><span id="result">—</span>
+    </div>
+  </div>
+
+  <!-- LIVE STATE -->
+  <div class="grid g3" style="margin-bottom:16px">
     <div class="card">
-      <h2>Sơ đồ Kiến trúc luồng</h2>
-      <div class="arch-visualizer">
-        <svg class="arch-svg" viewBox="0 0 320 200">
-          <!-- Connectors -->
-          <line x1="50" y1="100" x2="110" y2="100" stroke="#30363d" stroke-width="2" />
-          <line x1="160" y1="100" x2="220" y2="100" stroke="#30363d" stroke-width="2" />
-          
-          <path d="M 50 100 L 50 40 L 110 40" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
-          <path d="M 160 40 L 220 40 C 240 40, 240 100, 260 100" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
-          
-          <path d="M 160 100 L 160 160 L 220 160" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="3,3" />
-          
-          <!-- Nodes -->
-          <g class="node-group active" data-node="gateway" transform="translate(10, 80)">
-            <rect x="0" y="0" width="80" height="40" rx="6" />
-            <text x="40" y="24" text-anchor="middle">Gateway</text>
-          </g>
-          
-          <g class="node-group" data-node="cache" transform="translate(110, 20)">
-            <rect x="0" y="0" width="80" height="40" rx="6" />
-            <text x="40" y="24" text-anchor="middle">Redis Cache</text>
-          </g>
-          
-          <g class="node-group" data-node="breaker1" transform="translate(110, 80)">
-            <rect x="0" y="0" width="80" height="40" rx="6" />
-            <text x="40" y="24" text-anchor="middle">CB: Primary</text>
-          </g>
-          
-          <g class="node-group" data-node="breaker2" transform="translate(110, 140)">
-            <rect x="0" y="0" width="80" height="40" rx="6" />
-            <text x="40" y="24" text-anchor="middle">CB: Backup</text>
-          </g>
-          
-          <g class="node-group" data-node="fallback" transform="translate(230, 80)">
-            <rect x="0" y="0" width="80" height="40" rx="6" />
-            <text x="40" y="24" text-anchor="middle">Fallback Tĩnh</text>
-          </g>
-        </svg>
-      </div>
-      <div class="node-desc-card" id="node-desc">
-        Bấm vào bất cứ thành phần nào trong sơ đồ để xem vai trò và cách xử lý chi tiết.
-      </div>
+      <h2>Circuit breakers</h2>
+      <div id="breakers"></div>
+      <p class="hint">OPEN → fail fast (không gọi provider). Sau <b>2s</b> mở cho <b>1 probe</b> (HALF_OPEN); probe OK → CLOSED, probe fail → OPEN lại.</p>
     </div>
-
-    <!-- Live SLO Checklist -->
     <div class="card">
-      <h2>Mức cam kết dịch vụ (SLO Targets)</h2>
-      <div id="slo-container">
-        <!-- Will be filled by JS -->
-      </div>
+      <h2>Metrics (phiên demo)</h2>
+      <div id="metrics"></div>
+    </div>
+    <div class="card">
+      <h2>Cache</h2>
+      <div id="cachebox"></div>
     </div>
   </div>
 
-  <!-- Interactive comparison dashboard -->
-  <div class="card" style="margin-bottom: 24px;">
-    <h2>Bảng điều khiển So sánh & Đo lường</h2>
-    
-    <div class="tab-header">
-      <button class="tab-btn active" onclick="switchTab('cache-enabled')">Có sử dụng Cache</button>
-      <button class="tab-btn" onclick="switchTab('cache-disabled')">Tắt Cache (Baseline)</button>
-      <button class="tab-btn" onclick="switchTab('comparison')">Bảng so sánh chi tiết & Delta</button>
+  <!-- LOG + REAL METRICS -->
+  <div class="grid g2">
+    <div class="card">
+      <h2>Nhật ký luồng (từng bước)</h2>
+      <div class="log" id="log"><p class="hint">Chưa có request nào. Bấm “Gửi request”.</p></div>
     </div>
-
-    <!-- Cache Enabled Content -->
-    <div class="tab-content active" id="tab-cache-enabled">
-      <div class="grid g2" style="margin-bottom: 20px;">
-        <div class="stat-grid">
-          <div class="stat-box">
-            <div class="stat-label">Availability (Khả dụng)</div>
-            <div class="stat-num green" id="ce-avail">-</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Cache Hit Rate (Trúng cache)</div>
-            <div class="stat-num blue" id="ce-hit">-</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Tổng chi phí thử nghiệm</div>
-            <div class="stat-num purple" id="ce-cost">-</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Circuit Tripped (Ngắt mạch)</div>
-            <div class="stat-num yellow" id="ce-trips">-</div>
-          </div>
-        </div>
-        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
-          <h3 style="margin-top: 0; font-size: 14px; font-weight: 600;">Phân tích hệ thống (Có sử dụng Cache)</h3>
-          <p style="margin: 0 0 12px; font-size: 13px; color: var(--text-muted);">Với cấu hình Redis Cache được chia sẻ cho nhiều instance:</p>
-          <ul style="font-size: 13px;">
-            <li>Đạt tỉ lệ trúng cache lên tới **73%** giúp hạn chế tối đa các cuộc gọi trùng lặp lên LLM.</li>
-            <li>Tiết kiệm đáng kể tài chính (**$0.219** được lưu giữ).</li>
-            <li>Số lần ngắt mạch giảm mạnh chỉ còn **8 lần**, giúp hệ thống giữ vững độ tin cậy.</li>
-          </ul>
-        </div>
-      </div>
+    <div class="card">
+      <h2>Kết quả đo THẬT (make run-chaos, 300 request)</h2>
+      <div id="real"></div>
+      <p class="foot">Nguồn: <code>reports/metrics.json</code> — sinh bằng <code>make run-chaos</code> (cache Redis Docker, 3 chaos scenario). Đây là số đo thật từ code Python, khác với phiên mô phỏng ở trên.</p>
     </div>
-
-    <!-- Cache Disabled Content -->
-    <div class="tab-content" id="tab-cache-disabled">
-      <div class="grid g2" style="margin-bottom: 20px;">
-        <div class="stat-grid">
-          <div class="stat-box">
-            <div class="stat-label">Availability (Khả dụng)</div>
-            <div class="stat-num yellow" id="cd-avail">-</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Cache Hit Rate (Trúng cache)</div>
-            <div class="stat-num blue">0.0%</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Tổng chi phí thử nghiệm</div>
-            <div class="stat-num purple" id="cd-cost">-</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Circuit Tripped (Ngắt mạch)</div>
-            <div class="stat-num danger" id="cd-trips">-</div>
-          </div>
-        </div>
-        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
-          <h3 style="margin-top: 0; font-size: 14px; font-weight: 600;">Phân tích hệ thống (Không sử dụng Cache)</h3>
-          <p style="margin: 0 0 12px; font-size: 13px; color: var(--text-muted);">Khi vô hiệu hóa bộ nhớ đệm cache:</p>
-          <ul style="font-size: 13px;">
-            <li>Chi phí tăng gấp **3.7 lần** do mọi request đều phải gọi qua API của LLM.</li>
-            <li>Các sự cố ngắt mạch xảy ra liên tục (**22 lần**) do Primary Model quá tải/lỗi flake.</li>
-            <li>Tỉ lệ khả dụng tụt xuống **96.33%**, không đạt mục tiêu SLO do nhiều cuộc gọi rơi vào vùng lỗi.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detailed Comparison Content -->
-    <div class="tab-content" id="tab-comparison">
-      <div style="overflow-x: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Chỉ số thử nghiệm</th>
-              <th style="text-align: right;">Không sử dụng Cache</th>
-              <th style="text-align: right;">Có sử dụng Cache</th>
-              <th style="text-align: right;">Sự khác biệt (Delta)</th>
-            </tr>
-          </thead>
-          <tbody id="comparison-rows">
-            <!-- Filled by JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Collapsible Details sections -->
-  <div class="grid g1">
-    
-    <!-- Scenarios -->
-    <div class="accordion-item">
-      <button class="accordion-trigger" onclick="toggleAccordion(this)">
-        🔥 Chi tiết kịch bản thử nghiệm Chaos (Scenarios Status)
-      </button>
-      <div class="accordion-content">
-        <div class="accordion-content-inner">
-          <ul style="margin: 0;">
-            <li><strong>primary_timeout_100 (ĐẠT):</strong> Primary model bị cấu hình lỗi 100%. Gateway đã tự động chuyển hướng thành công sang Backup model thông qua Circuit Breaker.</li>
-            <li><strong>primary_flaky_50 (ĐẠT):</strong> Primary model bị flaky 50%. Mạch bảo vệ dao động giữa các trạng thái CLOSED/OPEN, giúp phân bổ tải thông minh.</li>
-            <li><strong>all_healthy (ĐẠT):</strong> Cả 2 model đều khỏe mạnh. 100% request được xử lý mượt mà qua Primary model.</li>
-          </ul>
-        </div>
-      </div>
+  <!-- DETAILED 300 -->
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">🔬 Chi tiết 300 request — 3 chaos scenario × 100</h2>
+      <button class="primary" id="run300">▶ Chạy 300 request</button>
     </div>
-
-    <!-- Failure Analysis -->
-    <div class="accordion-item">
-      <button class="accordion-trigger" onclick="toggleAccordion(this)">
-        ⚠️ Phân tích điểm yếu & Rủi ro hệ thống (Failure Analysis)
-      </button>
-      <div class="accordion-content">
-        <div class="accordion-content-inner">
-          <p style="margin-top: 0;">Mặc dù hệ thống chạy ổn định, vẫn tồn tại điểm yếu tiềm tàng:</p>
-          <ul style="margin: 0;">
-            <li><strong>Rủi ro kết nối Redis:</strong> Nếu Redis Cluster gặp sự cố ngoại mạng hoặc bị quá tải, bộ nhớ đệm `SharedRedisCache` sẽ bị crash. Hệ thống hiện tại chưa xử lý loại trừ ngoại lệ kết nối Redis này một cách mềm dẻo.</li>
-            <li><strong>Giải pháp khắc phục đề xuất:</strong> Triển khai cơ chế *Graceful Cache Degradation* (Tự động hạ cấp) — Khi Redis mất kết nối, gateway sẽ tự động hạ cấp xuống sử dụng `ResponseCache` in-memory tạm thời hoặc bỏ qua cache trực tiếp để tránh gây sập Gateway.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Next Steps -->
-    <div class="accordion-item">
-      <button class="accordion-trigger" onclick="toggleAccordion(this)">
-        🚀 Kế hoạch cải tiến Production (Next Steps)
-      </button>
-      <div class="accordion-content">
-        <div class="accordion-content-inner">
-          <ol style="margin: 0; padding-left: 20px;">
-            <li style="margin-bottom: 8px;"><strong>Đồng bộ trạng thái Circuit Breaker toàn cục:</strong> Lưu trữ trạng thái counter lỗi của các Circuit Breaker trên Redis thay vì in-memory để tất cả các instance gateway phân tán có cùng góc nhìn về sức khỏe của các Provider.</li>
-            <li style="margin-bottom: 8px;"><strong>Kiểm soát ngân sách token (Budget-aware Routing):</strong> Tự động chặn hoặc chuyển hướng các truy vấn đắt đỏ sang model rẻ hơn một khi ngân sách dự kiến của tài khoản đạt ngưỡng giới hạn.</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-
+    <div id="d300"><p class="hint">Bấm “Chạy 300 request” để mô phỏng đúng 3 chaos scenario (giống <code>make run-chaos</code>): mỗi scenario 100 request. Xem breakdown theo scenario, phân bố độ trễ (histogram), và heatmap từng request.</p></div>
+    <p class="foot">Mô phỏng chạy bằng JS trong browser (cùng logic &amp; config với code Python). Kết quả gần đúng với card “Kết quả đo THẬT” — mỗi lần chạy số sẽ hơi khác do random, đúng bản chất chaos test.</p>
   </div>
 
+  <!-- OVERALL REPORT -->
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">📊 Báo cáo tổng thể — tổng hợp tất cả request (phiên demo)</h2>
+      <button id="exportReport">⬇ Xuất JSON</button>
+    </div>
+    <div id="report"></div>
+    <p class="foot">Tổng hợp mọi request bạn đã bắn trong phiên (kể cả “Bắn 20 request”). Reset để làm lại từ đầu.</p>
+  </div>
+
+  <!-- FULL FLOW DESCRIPTION -->
+  <div class="card" style="margin-top:16px">
+    <h2>Mô tả luồng đầy đủ</h2>
+    <ul class="flowdesc">
+      <li><b>1. Cache check.</b> Gateway gọi <code>cache.get(prompt)</code>. Nếu query chứa PII (balance, password, ssn, <code>user 123</code>…) → <b>chặn ngay</b> (không lưu, không trả). Nếu tìm được entry có <code>similarity ≥ ngưỡng</code> và không phải false-hit → trả <span style="color:var(--cyan)">cache hit</span> (cost 0, latency 0).</li>
+      <li><b>2. False-hit guard.</b> Hai câu rất giống nhưng khác số 4 chữ số (2024 vs 2026) bị từ chối và ghi vào <code>false_hit_log</code> — tránh trả nhầm đáp án cũ.</li>
+      <li><b>3. Primary qua circuit breaker.</b> Nếu breaker <b>OPEN</b> → <span style="color:var(--amber)">fail fast</span>, bỏ qua provider (chống retry storm). Nếu <b>CLOSED/HALF_OPEN</b> → gọi Provider A. Lỗi → <code>record_failure()</code> (đủ 3 lỗi liên tiếp thì mở circuit).</li>
+      <li><b>4. Backup fallback.</b> Primary hỏng/OPEN → thử Provider B qua breaker riêng. Thành công → <code>route=fallback</code>, ghi kết quả vào cache cho lần sau.</li>
+      <li><b>5. Static fallback.</b> Mọi provider hỏng → trả câu “degraded”, <code>route=static_fallback</code> — hệ thống <b>không bao giờ ném lỗi ra ngoài</b>.</li>
+      <li><b>6. Recovery.</b> Circuit OPEN đợi <code>reset_timeout=2s</code> rồi thả 1 probe (HALF_OPEN). Probe thành công → CLOSED (hồi phục); thất bại → OPEN lại.</li>
+    </ul>
+  </div>
+
+  <p class="foot">Tài liệu kỹ thuật: <a href="../SOLUTION.md">SOLUTION.md</a> · Báo cáo: <a href="final_report.md">reports/final_report.md</a></p>
 </div>
 
 <script>
-  // Số liệu thật được ghi nhận trong reports/metrics.json và metrics_nocache.json
-  const DATA = {
-    enabled: {
-      avail: 0.9967,
-      hits: 0.7300,
-      cost: 0.033222,
-      trips: 8,
-      err: 0.0033,
-      p50: 278.61,
-      p95: 317.21,
-      p99: 321.12,
-      fallback: 0.9839,
-      recovery: 2491.29
-    },
-    disabled: {
-      avail: 0.9633,
-      hits: 0.0000,
-      cost: 0.124034,
-      trips: 22,
-      err: 0.0367,
-      p50: 281.08,
-      p95: 318.69,
-      p99: 323.06,
-      fallback: 0.9469,
-      recovery: 2316.46
-    }
-  };
+/* ---------- config: khớp configs/default.yaml ---------- */
+const CFG = {
+  cb:{ failure_threshold:3, reset_timeout_seconds:2, success_threshold:1 },
+  cache:{ ttl_seconds:300, similarity_threshold:0.92 },
+  providers:[
+    {name:'primary', fail_rate:0.25, base_latency_ms:180, cost_per_1k:0.01},
+    {name:'backup',  fail_rate:0.05, base_latency_ms:260, cost_per_1k:0.006},
+  ]
+};
+/* số đo THẬT nhúng từ reports/metrics.json */
+const REAL = {
+  "total_requests": 300,
+  "availability": 0.9967,
+  "error_rate": 0.0033,
+  "latency_p50_ms": 278.61,
+  "latency_p95_ms": 317.21,
+  "latency_p99_ms": 321.12,
+  "fallback_success_rate": 0.9839,
+  "cache_hit_rate": 0.73,
+  "circuit_open_count": 8,
+  "estimated_cost": 0.033222,
+  "estimated_cost_saved": 0.219
+};
 
-  // SLO definition
-  const SLO = [
-    { name: 'Tính khả dụng (Availability)', target: '>= 99%', actual: DATA.enabled.avail, unit: '%', type: 'avail' },
-    { name: 'Độ trễ P95 (Latency P95)', target: '< 2500 ms', actual: DATA.enabled.p95, unit: ' ms', type: 'lat' },
-    { name: 'Tỉ lệ xử lý lỗi thành công (Fallback Success Rate)', target: '>= 95%', actual: DATA.enabled.fallback, unit: '%', type: 'fallback' },
-    { name: 'Tỉ lệ trúng cache (Cache Hit Rate)', target: '>= 10%', actual: DATA.enabled.hits, unit: '%', type: 'hit' },
-    { name: 'Thời gian phục hồi mạch (Recovery Time)', target: '< 5000 ms', actual: DATA.enabled.recovery, unit: ' ms', type: 'recovery' }
+/* 20 câu mẫu (từ data/sample_queries.jsonl). expected_risk CHỈ để hiển thị gợi ý,
+   KHÔNG dùng cho quyết định luồng — logic tự suy từ nội dung. */
+const QUERIES = [
+ ["Summarize the refund policy for a student who missed the deadline.","policy"],
+ ["What should I do when API calls return 429?","technical"],
+ ["Explain circuit breaker states in one paragraph.","technical"],
+ ["Give me the current account balance for user 123.","privacy"],
+ ["Summarize the admission FAQ in 5 bullets.","faq"],
+ ["What is the password reset process for user 456?","privacy"],
+ ["Summarize the refund policy for a student who missed the 2024 deadline.","policy_dated"],
+ ["Summarize the refund policy for a student who missed the 2026 deadline.","policy_dated"],
+ ["Show credit card details for account 7890.","privacy"],
+ ["Explain the difference between retry and circuit breaker patterns.","technical"],
+ ["List three benefits of response caching in LLM gateways.","technical"],
+ ["What are the admission requirements for international students?","faq"],
+ ["Describe the social security number validation process.","privacy"],
+ ["Compare latency between primary and backup providers.","technical"],
+ ["Summarize the admission FAQ in 3 bullets.","faq"],
+ ["What is the tuition fee for the 2024 academic year?","faq_dated"],
+ ["What is the tuition fee for the 2025 academic year?","faq_dated"],
+ ["Explain how half-open state prevents retry storms.","technical"],
+ ["What is the SSN for employee 1234?","privacy"],
+ ["How does Redis EXPIRE handle key eviction under memory pressure?","technical"],
+];
+
+/* ---------- logic cache: khớp cache.py ---------- */
+const PRIVACY = /\b(balance|password|credit.card|ssn|social.security|user.\d+|account.\d+)\b/i;
+const isUncacheable = q => PRIVACY.test(q);
+function tokenize(t){
+  const c={};
+  for(const w of t.toLowerCase().split(/\s+/).filter(Boolean)){
+    c[w]=(c[w]||0)+1;
+    for(let i=0;i<=w.length-3;i++){const g=w.slice(i,i+3);c[g]=(c[g]||0)+1;}
+  }
+  return c;
+}
+function similarity(a,b){
+  if(a===b) return 1;
+  const va=tokenize(a), vb=tokenize(b);
+  let dot=0; for(const t in va) if(t in vb) dot+=va[t]*vb[t];
+  if(!dot) return 0;
+  let ma=0,mb=0; for(const t in va) ma+=va[t]*va[t]; for(const t in vb) mb+=vb[t]*vb[t];
+  return dot/(Math.sqrt(ma)*Math.sqrt(mb));
+}
+function fourDigits(s){ return new Set(s.match(/\b\d{4}\b/g)||[]); }
+function looksFalseHit(q,k){
+  const nq=fourDigits(q), nk=fourDigits(k);
+  if(nq.size && nk.size){
+    if(nq.size!==nk.size) return true;
+    for(const x of nq) if(!nk.has(x)) return true;
+    return false;
+  }
+  return false;
+}
+class Cache{
+  constructor(ttl,thr){this.ttl=ttl;this.thr=thr;this.entries=[];this.hits=0;this.miss=0;this.saved=0;this.false_hit_log=[];this.privacy_blocks=0;}
+  get(q){
+    if(isUncacheable(q)) return {value:null,score:0,reason:'privacy'};
+    const now=Date.now()/1000;
+    this.entries=this.entries.filter(e=> now-e.created_at <= this.ttl);
+    let best=null,bs=0;
+    for(const e of this.entries){const s=similarity(q,e.key); if(s>bs){bs=s;best=e;}}
+    if(best && bs>=this.thr){
+      if(looksFalseHit(q,best.key)){this.false_hit_log.push({q,k:best.key,score:bs}); return {value:null,score:bs,reason:'false_hit',key:best.key};}
+      return {value:best.value,score:bs,reason:'hit',key:best.key};
+    }
+    return {value:null,score:bs,reason:'miss',key:best?best.key:null};
+  }
+  set(q,v){ if(isUncacheable(q)){this.privacy_blocks++;return;} this.entries.push({key:q,value:v,created_at:Date.now()/1000}); }
+}
+/* ---------- circuit breaker: khớp circuit_breaker.py ---------- */
+class Breaker{
+  constructor(name,ft,rt,st){this.name=name;this.ft=ft;this.rt=rt*1000;this.st=st;
+    this.state='closed';this.fc=0;this.sc=0;this.opened_at=null;this.opens=0;}
+  allow(){
+    if(this.state==='closed'||this.state==='half_open') return true;
+    if(this.opened_at!==null && (Date.now()-this.opened_at)>=this.rt){this._t('half_open');return true;}
+    return false;
+  }
+  onSuccess(){this.fc=0;this.sc++; if(this.state==='half_open'&&this.sc>=this.st){this._t('closed');this.sc=0;}}
+  onFailure(){this.fc++;this.sc=0;
+    if(this.state==='half_open'){this._t('open');this.opened_at=Date.now();}
+    else if(this.fc>=this.ft){this._t('open');this.opened_at=Date.now();}}
+  _t(ns){ if(this.state===ns) return; if(ns==='open') this.opens++; this.state=ns; }
+  remainingMs(){ return this.state==='open'&&this.opened_at!==null ? Math.max(0,this.rt-(Date.now()-this.opened_at)) : 0; }
+}
+/* ---------- gateway: khớp gateway.py ---------- */
+function tokensCost(prompt,p){
+  const inTok=Math.max(1,prompt.split(/\s+/).filter(Boolean).length);
+  const outTok=20+Math.floor(Math.random()*61);
+  return (inTok+outTok)/1000*p.cost_per_1k;
+}
+class Gateway{
+  constructor(){
+    this.cache=new Cache(CFG.cache.ttl_seconds,CFG.cache.similarity_threshold);
+    this.breakers={}; for(const p of CFG.providers) this.breakers[p.name]=new Breaker(p.name,CFG.cb.failure_threshold,CFG.cb.reset_timeout_seconds,CFG.cb.success_threshold);
+    this.m={total:0,success:0,fail:0,cache_hits:0,primary:0,fallback:0,static:0,cost:0,saved:0,lat:[],pii:0,false_hit:0};
+  }
+  complete(prompt){
+    const steps=[];
+    const cg=this.cache.get(prompt);
+    if(cg.reason==='hit'){ steps.push({stage:'cache',cls:'hit',v:`HIT · sim ${cg.score.toFixed(2)}`,d:`≥ ${this.cache.thr}`});
+      return this._done(steps,{route:`cache_hit:${cg.score.toFixed(2)}`,provider:null,cache_hit:true,latency:0,cost:0}); }
+    if(cg.reason==='privacy'){ this.m.pii++; steps.push({stage:'cache',cls:'skip',v:'PII → chặn',d:'không lưu / không trả'}); }
+    else if(cg.reason==='false_hit'){ this.m.false_hit++; steps.push({stage:'cache',cls:'skip',v:`false-hit ${cg.score.toFixed(2)}`,d:`khác số với "${cg.key}"`}); }
+    else steps.push({stage:'cache',cls:'miss',v:`MISS · best ${cg.score.toFixed(2)}`,d:`< ${this.cache.thr}`});
+
+    let last=null;
+    for(let i=0;i<CFG.providers.length;i++){
+      const p=CFG.providers[i], b=this.breakers[p.name];
+      if(!b.allow()){ steps.push({stage:p.name,cls:'skip',v:'SKIP · OPEN',d:'fail fast, không gọi provider'}); last='circuit open'; continue; }
+      if(Math.random()<p.fail_rate){ b.onFailure(); steps.push({stage:p.name,cls:'fail',v:'✗ ProviderError',d:`lỗi ${b.fc}/${b.ft}${b.state==='open'?' → OPEN':''}`}); last=p.name+' failure'; continue; }
+      b.onSuccess();
+      const lat=p.base_latency_ms+Math.floor(Math.random()*61), cost=tokensCost(prompt,p);
+      steps.push({stage:p.name,cls:'pass',v:`✓ ${lat}ms`,d:`$${cost.toFixed(5)}${b.state==='closed'&&i>0?'':''}`});
+      this.cache.set(prompt,`[${p.name}] reliable answer`);
+      return this._done(steps,{route:i===0?'primary':'fallback',provider:p.name,cache_hit:false,latency:lat,cost});
+    }
+    steps.push({stage:'static',cls:'fail',v:'degraded',d:'mọi provider hỏng'});
+    return this._done(steps,{route:'static_fallback',provider:null,cache_hit:false,latency:0,cost:0,error:last});
+  }
+  _done(steps,r){
+    this.m.total++; this.m.cost+=r.cost;
+    if(r.cache_hit){this.m.cache_hits++;this.m.saved+=0.001;this.m.success++;}
+    else if(r.route==='fallback'){this.m.fallback++;this.m.success++;}
+    else if(r.route==='static_fallback'){this.m.static++;this.m.fail++;}
+    else if(r.route==='primary'){this.m.primary++;this.m.success++;}
+    else this.m.success++;
+    if(r.latency>0) this.m.lat.push(r.latency);
+    r.steps=steps; return r;
+  }
+}
+
+/* ---------- UI ---------- */
+let gw=new Gateway();
+const $=id=>document.getElementById(id);
+const NODES=['user','cache','primary','backup','static'];
+const ARROWS=['a-1','a-2','a-3','a-4'];
+
+function fillQueries(){
+  QUERIES.forEach(([q,r],i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${q}  ·  [${r}]`;$('q').appendChild(o);});
+}
+function clearFlow(){
+  NODES.forEach(n=>{const el=$('n-'+n); el.className='node'; const v=$('v-'+n); if(v)v.textContent='';});
+  ARROWS.forEach(a=>$(a).classList.remove('lit'));
+  $('result').textContent='—'; $('result').className='';
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function playFlow(res, animate){
+  clearFlow();
+  const stageNode={cache:'cache',primary:'primary',backup:'backup',static:'static'};
+  // user
+  $('n-user').classList.add('active');
+  if(animate) await sleep(220);
+  const order=['cache','primary','backup','static'];
+  let idx=0;
+  for(const st of res.steps){
+    const node=stageNode[st.stage]; if(!node) continue;
+    // light arrow leading in
+    $('n-user').classList.remove('active');
+    $(ARROWS[Math.min(idx,ARROWS.length-1)]).classList.add('lit');
+    const el=$('n-'+node); el.classList.add('active');
+    const v=$('v-'+node); v.textContent=st.v; el.title=st.d;
+    if(animate) await sleep(420);
+    el.classList.remove('active'); el.classList.add(st.cls);
+    v.textContent=st.v+(st.d?` · ${st.d}`:'');
+    idx++;
+    if(['pass','hit'].includes(st.cls)) break; // request resolved here
+  }
+  const cls = res.route.startsWith('cache_hit')?'cache':res.route;
+  $('result').className='route '+cls;
+  $('result').innerHTML = `<b>route = ${res.route}</b>` + (res.provider?` · provider=${res.provider}`:'') +
+    ` · latency=${res.latency}ms · cost=$${res.cost.toFixed(5)}` + (res.error?` · <span style="color:var(--red)">error: ${res.error}</span>`:'');
+  renderAll();
+  logRequest(res);
+}
+
+function pct(a,b){return b? (a/b*100).toFixed(1)+'%':'0%';}
+function percentile(arr,q){ if(!arr.length) return 0; const s=[...arr].sort((x,y)=>x-y); const k=(s.length-1)*q/100; const lo=Math.floor(k),hi=Math.min(lo+1,s.length-1); return (s[lo]*(1-(k-lo))+s[hi]*(k-lo)); }
+
+function renderBreakers(){
+  const box=$('breakers'); box.innerHTML='';
+  for(const p of CFG.providers){
+    const b=gw.breakers[p.name];
+    const d=$('d-'+p.name); if(d) d.className='dot s-'+b.state;
+    const rem=b.remainingMs();
+    const el=document.createElement('div'); el.className='breaker';
+    el.innerHTML=`<div class="row"><b>${p.name}</b><span class="badge b-${b.state}">${b.state.toUpperCase()}</span></div>
+      <div class="kv"><span class="k">failures</span><span>${b.fc} / ${b.ft}</span>
+      <span class="k">lần mở circuit</span><span>${b.opens}</span>
+      <span class="k">fail_rate</span><span>${p.fail_rate}</span></div>
+      ${b.state==='open'?`<div class="cd">⏳ probe sau ${(rem/1000).toFixed(1)}s${rem<=0?' — sẵn sàng (HALF_OPEN ở request kế)':''}</div>`:''}`;
+    box.appendChild(el);
+  }
+}
+function renderMetrics(){
+  const m=gw.m;
+  $('metrics').innerHTML=`
+   <div class="metric"><span>total requests</span><span class="v">${m.total}</span></div>
+   <div class="metric"><span>availability</span><span class="v">${pct(m.success,m.total)}</span></div>
+   <div class="metric"><span>cache hit rate</span><span class="v">${pct(m.cache_hits,m.total)}</span></div>
+   <div class="metric"><span>route: primary/fallback/static</span><span class="v">${m.total-m.fallback-m.static-m.cache_hits} / ${m.fallback} / ${m.static}</span></div>
+   <div class="metric"><span>latency P50 / P95</span><span class="v">${percentile(m.lat,50).toFixed(0)} / ${percentile(m.lat,95).toFixed(0)} ms</span></div>
+   <div class="metric"><span>estimated cost</span><span class="v">$${m.cost.toFixed(5)}</span></div>
+   <div class="metric"><span>cost saved (cache)</span><span class="v">$${m.saved.toFixed(3)}</span></div>`;
+}
+function renderCache(){
+  const c=gw.cache;
+  const rows=c.entries.slice(-6).reverse().map(e=>`<tr><td class="mono">${e.key.slice(0,42)}${e.key.length>42?'…':''}</td></tr>`).join('')||'<tr><td class="hint">trống</td></tr>';
+  $('cachebox').innerHTML=`
+   <div class="metric"><span>entries đang lưu</span><span class="v">${c.entries.length}</span></div>
+   <div class="metric"><span>privacy blocked (set)</span><span class="v">${c.privacy_blocks}</span></div>
+   <div class="metric"><span>false-hit rejected</span><span class="v">${c.false_hit_log.length}</span></div>
+   <table style="margin-top:8px"><tr><th>Query đã cache (mới nhất)</th></tr>${rows}</table>`;
+}
+function renderReal(){
+  const r=REAL;
+  $('real').innerHTML=`
+   <div class="metric"><span>availability</span><span class="v">${(r.availability*100).toFixed(2)}%</span></div>
+   <div class="metric"><span>cache hit rate</span><span class="v">${(r.cache_hit_rate*100).toFixed(0)}%</span></div>
+   <div class="metric"><span>latency P50 / P95 / P99</span><span class="v">${r.latency_p50_ms} / ${r.latency_p95_ms} / ${r.latency_p99_ms} ms</span></div>
+   <div class="metric"><span>fallback success rate</span><span class="v">${(r.fallback_success_rate*100).toFixed(1)}%</span></div>
+   <div class="metric"><span>circuit open count</span><span class="v">${r.circuit_open_count}</span></div>
+   <div class="metric"><span>estimated cost</span><span class="v">$${r.estimated_cost}</span></div>
+   <div class="metric"><span>cost saved (cache)</span><span class="v">$${r.estimated_cost_saved}</span></div>`;
+}
+function renderReport(){
+  const m=gw.m, c=gw.cache, box=$('report');
+  const total=m.total;
+  if(!total){ box.innerHTML='<p class="hint">Chưa có request nào. Bấm “Gửi request” hoặc “Bắn 20 request”, báo cáo tổng hợp sẽ hiện ở đây.</p>'; return; }
+  const avail=m.success/total*100, errRate=m.fail/total*100, hitRate=m.cache_hits/total*100;
+  const lat=m.lat;
+  const p50=percentile(lat,50),p95=percentile(lat,95),p99=percentile(lat,99);
+  const avg=lat.length?lat.reduce((a,b)=>a+b,0)/lat.length:0;
+  const mn=lat.length?Math.min(...lat):0, mx=lat.length?Math.max(...lat):0;
+  const totalOpens=Object.values(gw.breakers).reduce((a,b)=>a+b.opens,0);
+  const routes=[
+    ['🗃️ cache_hit', m.cache_hits, 'var(--cyan)'],
+    ['🟢 primary', m.primary, 'var(--green)'],
+    ['🟡 fallback', m.fallback, 'var(--amber)'],
+    ['🔴 static_fallback', m.static, 'var(--red)'],
   ];
-
-  // Node descriptions for the interactive architecture map
-  const NODE_DESCS = {
-    gateway: "<strong>Gateway Layer:</strong> Nhận request từ người dùng, kiểm tra cache và phân bổ tải thông qua các Circuit Breakers.",
-    cache: "<strong>Redis Cache:</strong> Bộ nhớ đệm phân tán. So khớp ngữ nghĩa Cosine Similarity, loại trừ PII và chống false-hit khác năm.",
-    breaker1: "<strong>Circuit Breaker (Primary):</strong> Ngắt kết nối tới Provider chính nếu phát hiện lỗi liên tục để tránh retry storm.",
-    breaker2: "<strong>Circuit Breaker (Backup):</strong> Định tuyến dự phòng tới Provider phụ có chi phí thấp hơn nếu Provider chính bị ngắt mạch.",
-    fallback: "<strong>Static Fallback:</strong> Câu trả lời dự phòng tĩnh khi mọi dịch vụ LLM thượng nguồn đều mất kết nối hoặc bị ngắt mạch."
+  const bars=routes.map(([lbl,n,col])=>`
+     <div class="bar"><span class="lbl">${lbl}</span>
+       <span class="track"><span class="fill" style="width:${(n/total*100).toFixed(1)}%;background:${col}"></span></span>
+       <span class="num">${n} · ${(n/total*100).toFixed(1)}%</span></div>`).join('');
+  box.innerHTML=`
+   <div class="kpis">
+     <div class="kpi"><div class="kn">${total}</div><div class="kl">tổng request</div></div>
+     <div class="kpi"><div class="kn" style="color:var(--green)">${avail.toFixed(1)}%</div><div class="kl">availability</div></div>
+     <div class="kpi"><div class="kn" style="color:var(--cyan)">${hitRate.toFixed(1)}%</div><div class="kl">cache hit rate</div></div>
+     <div class="kpi"><div class="kn" style="color:${errRate>0?'var(--red)':'var(--txt)'}">${errRate.toFixed(1)}%</div><div class="kl">error rate</div></div>
+   </div>
+   <div class="grid g2">
+     <div>
+       <div class="report-h">Phân bộ route</div>${bars}
+     </div>
+     <div>
+       <div class="report-h">Độ trễ (chỉ request có gọi provider)</div>
+       <div class="metric"><span>P50 / P95 / P99</span><span class="v">${p50.toFixed(0)} / ${p95.toFixed(0)} / ${p99.toFixed(0)} ms</span></div>
+       <div class="metric"><span>min / trung bình / max</span><span class="v">${mn.toFixed(0)} / ${avg.toFixed(0)} / ${mx.toFixed(0)} ms</span></div>
+       <div class="metric"><span>số request tính latency</span><span class="v">${lat.length}</span></div>
+     </div>
+   </div>
+   <div class="grid g2" style="margin-top:4px">
+     <div>
+       <div class="report-h">Chi phí</div>
+       <div class="metric"><span>tổng chi phí provider</span><span class="v">$${m.cost.toFixed(5)}</span></div>
+       <div class="metric"><span>tiết kiệm nhờ cache</span><span class="v">$${m.saved.toFixed(3)}</span></div>
+       <div class="metric"><span>chi phí TB / request</span><span class="v">$${(m.cost/total).toFixed(5)}</span></div>
+     </div>
+     <div>
+       <div class="report-h">Guardrails & Circuit</div>
+       <div class="metric"><span>PII bị chặn</span><span class="v">${m.pii}</span></div>
+       <div class="metric"><span>false-hit bị từ chối</span><span class="v">${m.false_hit}</span></div>
+       <div class="metric"><span>tổng lần mở circuit</span><span class="v">${totalOpens}</span></div>
+       <div class="metric"><span>entries trong cache</span><span class="v">${c.entries.length}</span></div>
+     </div>
+   </div>`;
+}
+function reportJSON(){
+  const m=gw.m, lat=m.lat, t=Math.max(1,m.total);
+  return {
+    total_requests:m.total,
+    availability:+(m.success/t).toFixed(4),
+    error_rate:+(m.fail/t).toFixed(4),
+    cache_hit_rate:+(m.cache_hits/t).toFixed(4),
+    routes:{cache_hit:m.cache_hits,primary:m.primary,fallback:m.fallback,static_fallback:m.static},
+    latency_p50_ms:+percentile(lat,50).toFixed(2),
+    latency_p95_ms:+percentile(lat,95).toFixed(2),
+    latency_p99_ms:+percentile(lat,99).toFixed(2),
+    estimated_cost:+m.cost.toFixed(6),
+    estimated_cost_saved:+m.saved.toFixed(3),
+    pii_blocked:m.pii,
+    false_hit_rejected:m.false_hit,
+    circuit_open_count:Object.values(gw.breakers).reduce((a,b)=>a+b.opens,0),
   };
+}
+function renderAll(){renderBreakers();renderMetrics();renderCache();renderReport();}
 
-  // Switch tabs
-  function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    
-    if (tabName === 'cache-enabled') {
-      document.getElementById('tab-cache-enabled').classList.add('active');
-      event.target.classList.add('active');
-    } else if (tabName === 'cache-disabled') {
-      document.getElementById('tab-cache-disabled').classList.add('active');
-      event.target.classList.add('active');
-    } else {
-      document.getElementById('tab-comparison').classList.add('active');
-      event.target.classList.add('active');
-    }
+/* ---------- detailed 300-request chaos drill-down ---------- */
+const SCENARIOS_300=[
+  {name:'primary_timeout_100', desc:'Primary chết 100% → dồn sang backup', primary:1.0, backup:0.05},
+  {name:'primary_flaky_50',    desc:'Primary flaky 50% → circuit dao động', primary:0.5, backup:0.05},
+  {name:'all_healthy',         desc:'Baseline — cả hai provider khỏe',       primary:0.25, backup:0.05},
+];
+const REQ_PER_SCENARIO=100;
+function runScenario300(sc){
+  const save=CFG.providers.map(p=>p.fail_rate);
+  CFG.providers[0].fail_rate=sc.primary; CFG.providers[1].fail_rate=sc.backup;
+  const g=new Gateway(); const recs=[];
+  for(let i=0;i<REQ_PER_SCENARIO;i++){
+    const q=QUERIES[Math.floor(Math.random()*QUERIES.length)][0];
+    const r=g.complete(q);
+    const route=r.route.startsWith('cache_hit')?'cache_hit':r.route;
+    recs.push({i,q,route,fullroute:r.route,latency:r.latency,cost:r.cost,provider:r.provider,error:r.error||null});
   }
+  const opens=Object.values(g.breakers).reduce((a,b)=>a+b.opens,0);
+  CFG.providers.forEach((p,idx)=>p.fail_rate=save[idx]);
+  return {sc,recs,opens,cost:g.m.cost,saved:g.m.saved,pii:g.m.pii,false_hit:g.m.false_hit};
+}
+let RUNS300=[]; let LOGFILTER='all';
+function render300(){
+  const runs=SCENARIOS_300.map(runScenario300);
+  RUNS300=runs; LOGFILTER='all';
+  const all=runs.flatMap(r=>r.recs);
+  const total=all.length;
+  const cnt=(recs,k)=>recs.filter(r=>r.route===k).length;
+  const ch=cnt(all,'cache_hit'),pr=cnt(all,'primary'),fb=cnt(all,'fallback'),st=cnt(all,'static_fallback');
+  const succ=total-st;
+  const lat=all.map(r=>r.latency).filter(x=>x>0);
+  const opensTotal=runs.reduce((a,r)=>a+r.opens,0);
+  const costTotal=runs.reduce((a,r)=>a+r.cost,0), savedTotal=runs.reduce((a,r)=>a+r.saved,0);
+  const piiTotal=runs.reduce((a,r)=>a+r.pii,0), fhTotal=runs.reduce((a,r)=>a+r.false_hit,0);
 
-  // Toggle accordions
-  function toggleAccordion(btn) {
-    const item = btn.parentElement;
-    const content = btn.nextElementSibling;
-    item.classList.toggle('active');
-    if (item.classList.contains('active')) {
-      content.style.maxHeight = content.scrollHeight + 'px';
-    } else {
-      content.style.maxHeight = '0';
-    }
-  }
+  /* KPI */
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="kn">${total}</div><div class="kl">tổng request</div></div>
+    <div class="kpi"><div class="kn" style="color:var(--green)">${(succ/total*100).toFixed(1)}%</div><div class="kl">availability</div></div>
+    <div class="kpi"><div class="kn" style="color:var(--cyan)">${(ch/total*100).toFixed(1)}%</div><div class="kl">cache hit rate</div></div>
+    <div class="kpi"><div class="kn">${percentile(lat,50).toFixed(0)}/${percentile(lat,95).toFixed(0)}/${percentile(lat,99).toFixed(0)}</div><div class="kl">P50/P95/P99 ms</div></div>
+  </div>`;
 
-  // Render nodes hover
-  document.querySelectorAll('.node-group').forEach(group => {
-    group.addEventListener('click', () => {
-      document.querySelectorAll('.node-group').forEach(g => g.classList.remove('active'));
-      group.classList.add('active');
-      const nodeId = group.dataset.node;
-      document.getElementById('node-desc').innerHTML = NODE_DESCS[nodeId];
-    });
+  /* per-scenario table */
+  const rows=runs.map(run=>{
+    const r=run.recs,t=r.length;
+    const c=k=>cnt(r,k), st2=c('static_fallback'), succ2=t-st2;
+    const rl=r.map(x=>x.latency).filter(x=>x>0);
+    const pass=run.sc.name==='primary_timeout_100' ? (succ2/t>=0.9 && run.opens>=1)
+             : run.sc.name==='primary_flaky_50'    ? (succ2/t>=0.8)
+             : (succ2/t>=0.95);
+    return `<tr>
+      <td><b>${run.sc.name}</b><div class="hint">${run.sc.desc}</div></td>
+      <td>${(succ2/t*100).toFixed(0)}%</td>
+      <td>${(c('cache_hit')/t*100).toFixed(0)}%</td>
+      <td class="mono">${c('primary')} / ${c('fallback')} / ${st2}</td>
+      <td>${run.opens}</td>
+      <td class="mono">${percentile(rl,50).toFixed(0)} / ${percentile(rl,95).toFixed(0)}</td>
+      <td><span class="route ${pass?'primary':'static_fallback'}">${pass?'pass':'fail'}</span></td>
+    </tr>`;
+  }).join('');
+  const table=`<table style="margin-top:6px">
+    <tr><th>Scenario</th><th>avail</th><th>cache</th><th>prim/fb/static</th><th>opens</th><th>P50/P95</th><th>kết quả</th></tr>
+    ${rows}</table>`;
+
+  /* histogram */
+  const lo=150,hi=350,step=25; const buckets=[];
+  for(let b=lo;b<hi;b+=step) buckets.push({lo:b,n:0});
+  for(const v of lat){ let idx=Math.floor((v-lo)/step); idx=Math.max(0,Math.min(buckets.length-1,idx)); buckets[idx].n++; }
+  const maxN=Math.max(1,...buckets.map(b=>b.n));
+  const cols=buckets.map(b=>`<div class="col" style="height:${(b.n/maxN*100).toFixed(1)}%"><b>${b.n||''}</b></div>`).join('');
+  const xlab=buckets.map(b=>`<span>${b.lo}</span>`).join('');
+  const histo=`<div class="report-h">Phân bố độ trễ (ms) — ${lat.length} request có gọi provider</div>
+    <div class="histo">${cols}</div><div class="histo-x">${xlab}</div>`;
+
+  /* legend + heatmap */
+  const legend=`<div class="legend">
+    <span class="li"><span class="sw c-cache_hit"></span>cache_hit</span>
+    <span class="li"><span class="sw c-primary"></span>primary</span>
+    <span class="li"><span class="sw c-fallback"></span>fallback</span>
+    <span class="li"><span class="sw c-static_fallback"></span>static_fallback</span>
+  </div>`;
+  const heat=runs.map(run=>`
+    <div class="hint" style="margin-top:8px"><b>${run.sc.name}</b> · ${run.recs.length} request</div>
+    <div class="heat">${run.recs.map(r=>`<div class="cell c-${r.route}" title="#${r.i+1} · ${r.route}${r.provider?' ('+r.provider+')':''} · ${r.latency}ms · $${r.cost.toFixed(5)}"></div>`).join('')}</div>`).join('');
+
+  /* cost + guardrails */
+  const extra=`<div class="grid g2" style="margin-top:4px">
+    <div><div class="report-h">Chi phí (300 request)</div>
+      <div class="metric"><span>tổng chi phí provider</span><span class="v">$${costTotal.toFixed(5)}</span></div>
+      <div class="metric"><span>tiết kiệm nhờ cache</span><span class="v">$${savedTotal.toFixed(3)}</span></div>
+      <div class="metric"><span>tổng lần mở circuit</span><span class="v">${opensTotal}</span></div>
+    </div>
+    <div><div class="report-h">Guardrails</div>
+      <div class="metric"><span>route: cache/primary/fallback/static</span><span class="v mono">${ch}/${pr}/${fb}/${st}</span></div>
+      <div class="metric"><span>PII bị chặn</span><span class="v">${piiTotal}</span></div>
+      <div class="metric"><span>false-hit bị từ chối</span><span class="v">${fhTotal}</span></div>
+    </div>
+  </div>`;
+
+  /* per-request log (filterable) */
+  const logSection=`<div class="report-h" style="margin-top:14px">Log từng request (300)</div>
+    <div class="controls" id="logfilter" style="gap:8px">
+      <span class="chip active" data-f="all">tất cả (${total})</span>
+      <span class="chip" data-f="cache_hit">cache_hit (${ch})</span>
+      <span class="chip" data-f="primary">primary (${pr})</span>
+      <span class="chip" data-f="fallback">fallback (${fb})</span>
+      <span class="chip" data-f="static_fallback">static (${st})</span>
+    </div>
+    <div class="reqlog" id="reqlog"></div>`;
+
+  $('d300').innerHTML=kpis+table+histo+legend+heat+extra+logSection;
+  renderReqLog();
+  document.querySelectorAll('#logfilter .chip').forEach(chip=>chip.onclick=()=>{
+    LOGFILTER=chip.dataset.f;
+    document.querySelectorAll('#logfilter .chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    renderReqLog();
   });
-
-  // Load and Render SLO
-  function renderSLO() {
-    const container = document.getElementById('slo-container');
-    container.innerHTML = '';
-    
-    SLO.forEach(s => {
-      let isMet = false;
-      let pctVal = 0;
-      let displayActual = '';
-      
-      if (s.type === 'avail' || s.type === 'fallback' || s.type === 'hit') {
-        isMet = s.type === 'hit' ? s.actual >= 0.1 : (s.type === 'avail' ? s.actual >= 0.99 : s.actual >= 0.95);
-        pctVal = s.actual * 100;
-        displayActual = (s.actual * 100).toFixed(2) + s.unit;
-      } else if (s.type === 'lat') {
-        isMet = s.actual < 2500;
-        pctVal = Math.min(100, (1 - (s.actual / 2500)) * 100);
-        displayActual = s.actual.toFixed(1) + s.unit;
-      } else { // recovery
-        isMet = s.actual < 5000;
-        pctVal = Math.min(100, (1 - (s.actual / 5000)) * 100);
-        displayActual = s.actual.toFixed(1) + s.unit;
-      }
-      
-      const pColor = isMet ? 'success' : 'danger';
-      
-      const el = document.createElement('div');
-      el.className = 'slo-item';
-      el.innerHTML = `
-        <div class="slo-header">
-          <span class="slo-name">${s.name} <span class="badge ${pColor}">${isMet ? 'ĐẠT' : 'CHƯA ĐẠT'}</span></span>
-          <span class="slo-val">SLO: ${s.target} | Thực tế: ${displayActual}</span>
-        </div>
-        <div class="progress-bg">
-          <div class="progress-bar ${pColor}" style="width: ${pctVal}%"></div>
-        </div>
-      `;
-      container.appendChild(el);
-    });
+}
+function renderReqLog(){
+  const rows=[];
+  let n=0;
+  for(const run of RUNS300){
+    for(const r of run.recs){
+      n++;
+      if(LOGFILTER!=='all' && r.route!==LOGFILTER) continue;
+      rows.push(`<tr>
+        <td class="mono">${n}</td>
+        <td class="hint">${run.sc.name}</td>
+        <td class="q">${r.q.slice(0,50)}${r.q.length>50?'…':''}</td>
+        <td><span class="rpill rp-${r.route}">${r.fullroute}</span></td>
+        <td>${r.provider||'—'}</td>
+        <td class="mono">${r.latency||0}ms</td>
+        <td class="mono">$${r.cost.toFixed(5)}</td>
+        <td class="hint">${r.error||''}</td>
+      </tr>`);
+    }
   }
+  $('reqlog').innerHTML=`<table>
+    <tr><th>#</th><th>scenario</th><th>query</th><th>route</th><th>provider</th><th>latency</th><th>cost</th><th>error</th></tr>
+    ${rows.join('')||'<tr><td colspan="8" class="hint" style="padding:16px">Không có request nào khớp bộ lọc.</td></tr>'}</table>`;
+}
 
-  // Render Stats and Comparison
-  function renderStats() {
-    // Enabled
-    document.getElementById('ce-avail').textContent = (DATA.enabled.avail * 100).toFixed(2) + '%';
-    document.getElementById('ce-hit').textContent = (DATA.enabled.hits * 100).toFixed(1) + '%';
-    document.getElementById('ce-cost').textContent = '$' + DATA.enabled.cost.toFixed(5);
-    document.getElementById('ce-trips').textContent = DATA.enabled.trips + ' lần';
+let logCount=0;
+function logRequest(res){
+  const log=$('log'); if(logCount===0) log.innerHTML='';
+  logCount++;
+  const q=CFG._lastQ||'';
+  const cls = res.route.startsWith('cache_hit')?'cache':res.route;
+  const stepsHtml=res.steps.map(s=>`<div class="st">· ${s.stage}: ${s.v}${s.d?` <span class="hint">(${s.d})</span>`:''}</div>`).join('');
+  const div=document.createElement('div'); div.className='req';
+  div.innerHTML=`<div class="rq">#${logCount} <span class="mono">${q.slice(0,60)}${q.length>60?'…':''}</span></div>${stepsHtml}
+    <div>→ <span class="route ${cls}">${res.route}</span>${res.provider?` (${res.provider})`:''}</div>`;
+  log.prepend(div);
+}
 
-    // Disabled
-    document.getElementById('cd-avail').textContent = (DATA.disabled.avail * 100).toFixed(2) + '%';
-    document.getElementById('cd-cost').textContent = '$' + DATA.disabled.cost.toFixed(5);
-    document.getElementById('cd-trips').textContent = DATA.disabled.trips + ' lần';
+async function send(prompt){
+  CFG._lastQ=prompt;
+  const animate=$('anim').checked;
+  const res=gw.complete(prompt);
+  await playFlow(res,animate);
+}
 
-    // Comparison rows
-    const rows = [
-      { label: 'Tỉ lệ khả dụng (Availability)', unit: '%', isPct: true, valD: DATA.disabled.avail, valE: DATA.enabled.avail, lowerBetter: false },
-      { label: 'Tỉ lệ trúng Cache (Cache Hit Rate)', unit: '%', isPct: true, valD: DATA.disabled.hits, valE: DATA.enabled.hits, lowerBetter: false },
-      { label: 'Tổng chi phí ước tính', unit: '', isPct: false, prefix: '$', valD: DATA.disabled.cost, valE: DATA.enabled.cost, decimals: 5, lowerBetter: true },
-      { label: 'Số lần Circuit Breaker ngắt mạch', unit: ' lần', isPct: false, valD: DATA.disabled.trips, valE: DATA.enabled.trips, decimals: 0, lowerBetter: true },
-      { label: 'Độ trễ trung bình P50', unit: ' ms', isPct: false, valD: DATA.disabled.p50, valE: DATA.enabled.p50, decimals: 1, lowerBetter: true },
-      { label: 'Độ trễ P95', unit: ' ms', isPct: false, valD: DATA.disabled.p95, valE: DATA.enabled.p95, decimals: 1, lowerBetter: true },
-      { label: 'Thời gian phục hồi mạch trung bình', unit: ' ms', isPct: false, valD: DATA.disabled.recovery, valE: DATA.enabled.recovery, decimals: 1, lowerBetter: true }
-    ];
+/* events */
+fillQueries();
+renderAll(); renderReal();
+$('send').onclick=()=>send(QUERIES[+$('q').value][0]);
+$('repeat').onclick=()=>send(CFG._lastQ||QUERIES[+$('q').value][0]);
+$('burst').onclick=async()=>{
+  const anim=$('anim').checked; $('anim').checked=false;
+  for(let i=0;i<20;i++){ const idx=Math.floor(Math.random()*QUERIES.length); CFG._lastQ=QUERIES[idx][0]; const r=gw.complete(QUERIES[idx][0]); logRequest(r);}
+  renderAll(); $('anim').checked=anim;
+  // hiển thị flow của request cuối
+  await playFlow(gw.complete(CFG._lastQ), false);
+};
+$('reset').onclick=()=>{gw=new Gateway();logCount=0;clearFlow();$('log').innerHTML='<p class="hint">Đã reset.</p>';renderAll();};
+document.querySelectorAll('#health button').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('#health button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  CFG.providers[0].fail_rate=parseFloat(btn.dataset.r);
+  renderBreakers();
+});
+$('th').oninput=e=>{const v=parseFloat(e.target.value);$('thv').textContent=v.toFixed(2);gw.cache.thr=v;};
+$('exportReport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(reportJSON(),null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='demo_report.json'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('run300').onclick=render300;
 
-    const tbody = document.getElementById('comparison-rows');
-    tbody.innerHTML = '';
-    
-    rows.forEach(r => {
-      let dStr = '', eStr = '', deltaStr = '', deltaClass = 'neutral';
-      
-      if (r.isPct) {
-        dStr = (r.valD * 100).toFixed(2) + r.unit;
-        eStr = (r.valE * 100).toFixed(2) + r.unit;
-        const diff = (r.valE - r.valD) * 100;
-        deltaStr = (diff >= 0 ? '+' : '') + diff.toFixed(2) + r.unit;
-        deltaClass = diff === 0 ? 'neutral' : (diff > 0 ? (r.lowerBetter ? 'neg' : 'pos') : (r.lowerBetter ? 'pos' : 'neg'));
-      } else {
-        const pref = r.prefix || '';
-        dStr = pref + r.valD.toFixed(r.decimals) + r.unit;
-        eStr = pref + r.valE.toFixed(r.decimals) + r.unit;
-        const diff = r.valE - r.valD;
-        const pctDiff = r.valD > 0 ? (diff / r.valD * 100) : 0;
-        
-        deltaStr = (diff >= 0 ? '+' : '') + diff.toFixed(r.decimals) + r.unit;
-        if (pctDiff !== 0) {
-          deltaStr += ` (${pctDiff >= 0 ? '+' : ''}${pctDiff.toFixed(1)}%)`;
-        }
-        
-        deltaClass = diff === 0 ? 'neutral' : (diff > 0 ? (r.lowerBetter ? 'neg' : 'pos') : (r.lowerBetter ? 'pos' : 'neg'));
-      }
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight: 500;">${r.label}</td>
-        <td class="num">${dStr}</td>
-        <td class="num">${eStr}</td>
-        <td class="num"><span class="delta-badge ${deltaClass}">${deltaStr}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Init
-  window.onload = () => {
-    renderSLO();
-    renderStats();
-  };
+/* cập nhật countdown breaker mỗi 200ms */
+setInterval(renderBreakers,200);
 </script>
 </body>
 </html>
